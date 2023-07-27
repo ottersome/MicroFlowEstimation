@@ -1,5 +1,6 @@
-from py_utils.topologies.thick import ThickTopo
+from py_utils.topologies.thick import RoundTopology
 from py_utils.controllers.POX import POX
+from math import sqrt
 from mininet.net import Mininet
 from mininet.node import (
      OVSSwitch,
@@ -11,12 +12,13 @@ from mininet.node import (
 from mininet.cli import CLI
 from time import time
 from typing import List
+from numpy import random
 import argparse
 import threading
 
 def parse_args():
     args = argparse.ArgumentParser()
-    args.add_argument("--flows",default=10,type=int)
+    args.add_argument("--flows",default=10000,type=int)
     return args.parse_args()
 
 args = parse_args()
@@ -24,13 +26,19 @@ print(f'Running with {args.flows} flows')
 
 t1 = time()
 # Start topology and mininet
-topo = ThickTopo(args.flows)
+num_hosts = int(sqrt(args.flows))
+topo = RoundTopology(num_hosts)
 net = Mininet(topo=topo,
               switch=OVSSwitch,
               build=False,
               autoSetMacs=True,
               )
-flooding_time = 1
+
+capturing_time = 1
+# As Per Our own experiments we have seen rates of 1e7
+# So Cohens Rates *should* be okay
+uniform_lower = 100
+uniform_upper = 10000
 
 # Load our Traffic Flow
 # c0 = Controler('c0',port=6633)
@@ -38,14 +46,28 @@ flooding_time = 1
 
 # Load our Pythonic Controller.
 # (Not sure what this looks like  yet)
-def ddos_flood_true_ddos(hosts:List[Node],victims_ip):
-    for host in hosts:
-        #host.cmd('timeout '+str(flooding_time)+'s hping3 --flood '+victims_ip)
-        host.sendCmd('timeout '+str(flooding_time)+'s hping3 --flood '+victims_ip)
+# TODO: figure out generation of DON  and DOFF Params
+    # for now uniform
+def traffic_simulation(*hosts):
+    hosts = list(hosts)
+    num_hosts = len(hosts)
+    for i in range(num_hosts):
+        send_str =""
+        for j in range(num_hosts):
+            # TODO figur out what N shoudl be 
+            amp = " & " if j ==num_hosts-1 else ""
+            send_str += 'sourcesonoff -n 1000 --transmitter-udp '+\
+                             '--destination '+str(hosts[j].IP()) +\
+                             '--don-alpha ' + "0.9" +\
+                             '--doff-alpha ' + "0.9" + amp
+        hosts[i].sendCmd(send_str)
+        hosts[i].monitor()
 
-def ddos_flood_spoofed_ddos(host,victims_ip):
-    for host in hosts:
-        host.cmd('timeout '+str(flooding_time)+'s hping3 --flood -a '+host.ip+' '+victims_ip)
+
+# TODO remove when it becomes irrelevant
+#def ddos_flood_spoofed_ddos(host,victims_ip):
+#    for host in hosts:
+#        host.cmd('timeout '+str(flooding_time)+'s hping3 --flood -a '+host.ip+' '+victims_ip)
 
 # Start CLI 
 net.build()
@@ -54,15 +76,14 @@ t2 = time()
 print('Time to Start is ',t2-t1)
 
 # Emulate Traffic 
-print('End host is :',topo.end_host)
-hosts = [net.getNodeByName('h'+str(i)) for i in range(args.flows)]
-end_host = net.getNodeByName('end_host')
+hosts = [net.getNodeByName('h'+str(i)) for i in range(num_hosts)]
+switch = net.getNodeByName('s0')
 
-# Open Wireshark 
-end_host.sendCmd('sudo wireshark -i end_host-eth0 -k &')
+# Open Wireshark on first Host we can find
+switch.sendCmd('sudo wireshark -i s0-eth1 -k &')
 
-#flood_thread = threading.Thread(target=ddos_flood_true_ddos,args=(hosts,end_host.IP()))
-#flood_thread.start()
+flood_thread = threading.Thread(target=traffic_simulation,args=(hosts))
+flood_thread.start()
 
 # Estimate Utility Function.
 CLI( net )
