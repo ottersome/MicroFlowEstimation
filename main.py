@@ -13,8 +13,11 @@ from mininet.cli import CLI
 from time import time
 from typing import List
 from numpy import random
+import logging
 import argparse
 import threading
+
+logging.basicConfig(level=logging.DEBUG,filename="./log")
 
 def parse_args():
     args = argparse.ArgumentParser()
@@ -55,11 +58,12 @@ def traffic_simulation(*hosts):
         send_str =""
         for j in range(num_hosts):
             # TODO figur out what N shoudl be 
-            amp = " & " if j ==num_hosts-1 else ""
-            send_str += 'sourcesonoff -n 1000 --transmitter-udp '+\
-                             '--destination '+str(hosts[j].IP()) +\
-                             '--don-alpha ' + "0.9" +\
-                             '--doff-alpha ' + "0.9" + amp
+            amp = " && " if j !=num_hosts-1 else ""
+            send_str += 'sudo sourcesonoff -n 1000 --transmitter-udp'+\
+                             ' --destination '+str(hosts[j].IP()) +\
+                             ' --don-alpha ' + "0.9" +\
+                             ' --doff-alpha ' + "0.9" + amp
+        logging.debug(send_str)
         hosts[i].sendCmd(send_str)
         hosts[i].monitor()
 
@@ -78,9 +82,14 @@ print('Time to Start is ',t2-t1)
 # Emulate Traffic 
 hosts = [net.getNodeByName('h'+str(i)) for i in range(num_hosts)]
 switch = net.getNodeByName('s0')
+collector = net.getNodeByName('hc')
 
 # Open Wireshark on first Host we can find
-switch.sendCmd('sudo wireshark -i s0-eth1 -k &')
+switch.sendCmd('sudo ovs-ctl start')
+hosts[3].sendCmd('sudo wireshark -i h3-eth0 -k &')
+hosts[3].monitor()
+#collector.sendCmd('sudo wireshark -i hc-eth0 -k &')
+#collector.monitor()
 
 flood_thread = threading.Thread(target=traffic_simulation,args=(hosts))
 flood_thread.start()
