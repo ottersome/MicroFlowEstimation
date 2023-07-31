@@ -34,6 +34,5 @@ class RoundTopology(Topo):
             self.hi[i] = self.addHost('h'+str(i))
             self.addLink(self.hi[i],self.switch )
 
-
 topos = {'ThiccShallow': (lambda :  ThiccShallow())
          }

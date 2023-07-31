@@ -16,23 +16,24 @@ from numpy import random
 import logging
 import argparse
 import threading
+import configparser
+
+global_config = configparser.ConfigParser()
+with open('./controller_params.conf') as f:
+    global_config.read_file(f)
+
+config = global_config['DEFAULT']
+print('Working with config: ',dict(config))
 
 c0 = RemoteController('c0',ip='127.0.0.1',port=6653, protocols="OpenFlow13")
 
 logging.basicConfig(level=logging.DEBUG,filename="./log")
-
-def parse_args():
-    args = argparse.ArgumentParser()
-    args.add_argument("--flows",default=150,type=int)
-    return args.parse_args()
-
-args = parse_args()
-print(f'Running with {args.flows} flows')
+print(f'Running with {config["flows"]} flows')
 
 t1 = time()
 # Start topology and mininet
-num_hosts = int(sqrt(args.flows))
-topo = RoundTopology(num_hosts,collector_port=6600)
+num_hosts = int(sqrt(config.getint("flows"))) 
+topo = RoundTopology(num_hosts,collector_port=config.getint('collector_port'))
 net = Mininet(topo=topo,
               switch=OVSSwitch,
               build=False,
@@ -40,15 +41,11 @@ net = Mininet(topo=topo,
               controller=c0,
               autoSetMacs=True,
               )
-capturing_time = 1
 # As Per Our own experiments we have seen rates of 1e7
 # So Cohens Rates *should* be okay
 uniform_lower = 100
 uniform_upper = 10000
 
-# Load our Traffic Flow
-# c0 = Controler('c0',port=6633)
-# net.addController(c)
 
 # Load our Pythonic Controller.
 # (Not sure what this looks like  yet)
@@ -62,7 +59,7 @@ def traffic_simulation(*hosts):
         for j in range(num_hosts):
             # TODO figur out what N shoudl be 
             amp = " & disown "
-            send_str = 'sudo timeout 60s sourcesonoff -n 1 --transmitter-udp'+\
+            send_str = f'sudo timeout {config["traffic_sim_time"]} sourcesonoff -n 1 --transmitter-udp'+\
                              ' --destination '+str(hosts[j].IP()) +\
                              ' --don-alpha ' + "0.9" +\
                              ' --doff-alpha ' + "0.9" + amp
@@ -84,13 +81,17 @@ switch = net.getNodeByName('s0')
 print(switch)
 collector = net.getNodeByName('hc')
 
+collector.setIP(config['collector_ip'])
+collector.setMAC(config['collector_mac'])
+
+collector.cmd('sudo wireshark -i hc-eth0 -k &')
 #hosts[0].cmd('sudo wireshark -i h0-eth0 -k &')
 
 print('First Host MAC: {}'.format(hosts[0].MAC()))
 print('Collector MAC: ',collector.MAC())
 print('Switch MAC: ',switch.MAC())
 
-#  switch.cmd("ovs-vsctl set bridge s0 protocols=OpenFlow13")
+#  collector.cmd("ovs-vsctl set bridge s0 protocols=OpenFlow13")
 #  hosts[3].cmd("wireshark -i h3-eth0 -k &")
 
 flood_thread = threading.Thread(target=traffic_simulation,args=(hosts))

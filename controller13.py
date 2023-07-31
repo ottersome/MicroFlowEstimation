@@ -16,6 +16,7 @@ from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER, set_ev_cl
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet, ethernet, ipv4
 from ryu.lib.dpid import dpid_to_str
+from ryu import cfg
 import pprint
 import inspect
 
@@ -29,6 +30,12 @@ class Controller(RyuApp):
         super(Controller, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
         self.mac_to_port['s0'] = {}
+        self.config = cfg.CONF
+        self.config.register_opts([
+            cfg.StrOpt('collector_ip',default="10.0.0.200",help='IP for collector'),
+            cfg.StrOpt('collector_mac',default="00:00:00:00:01:A4",help='MAC for collector'),
+            cfg.StrOpt('collector_port',default=6600,help='Port for collector'),
+            ])
         # TODO: hard code the mac address of collector
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -93,6 +100,10 @@ class Controller(RyuApp):
             self.logger.debug('We FLOODIN')
 
         actions = [datapath.ofproto_parser.OFPActionOutput(out_port)]
+        # Add Flow To Collector
+        self.logger.info('Sampling packets to : '+self.config['collector_port'])
+        actions.append(datapath.ofproto_parser.OFPActionOutput(
+          int(self.config['collector_port'])))
         # Add Flow for Precise Match
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(
