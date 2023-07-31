@@ -11,6 +11,8 @@ be listed below.
 
 - [x] Create Basic Topologies
 - [ ] Setup Traffic via Scapy (or other tool).
+- [ ] Setup Self-Similar Traffic
+- [ ] Implement Time Sampling
 - [ ] Create a `dpctl.c` modification to allow for sampling. 
 
 # References:

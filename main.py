@@ -17,11 +17,13 @@ import logging
 import argparse
 import threading
 
+c0 = RemoteController('c0',ip='127.0.0.1',port=6653, protocols="OpenFlow13")
+
 logging.basicConfig(level=logging.DEBUG,filename="./log")
 
 def parse_args():
     args = argparse.ArgumentParser()
-    args.add_argument("--flows",default=10000,type=int)
+    args.add_argument("--flows",default=150,type=int)
     return args.parse_args()
 
 args = parse_args()
@@ -30,13 +32,14 @@ print(f'Running with {args.flows} flows')
 t1 = time()
 # Start topology and mininet
 num_hosts = int(sqrt(args.flows))
-topo = RoundTopology(num_hosts)
+topo = RoundTopology(num_hosts,collector_port=6600)
 net = Mininet(topo=topo,
               switch=OVSSwitch,
               build=False,
+              #  controller=Controller,
+              controller=c0,
               autoSetMacs=True,
               )
-
 capturing_time = 1
 # As Per Our own experiments we have seen rates of 1e7
 # So Cohens Rates *should* be okay
@@ -58,20 +61,16 @@ def traffic_simulation(*hosts):
         send_str =""
         for j in range(num_hosts):
             # TODO figur out what N shoudl be 
-            amp = " && " if j !=num_hosts-1 else ""
-            send_str += 'sudo sourcesonoff -n 1000 --transmitter-udp'+\
+            amp = " & disown "
+            send_str = 'sudo timeout 60s sourcesonoff -n 1 --transmitter-udp'+\
                              ' --destination '+str(hosts[j].IP()) +\
                              ' --don-alpha ' + "0.9" +\
                              ' --doff-alpha ' + "0.9" + amp
-        logging.debug(send_str)
-        hosts[i].sendCmd(send_str)
-        hosts[i].monitor()
+            hosts[i].cmd(send_str+amp)
+            logging.debug('h'+str(i)+':'+send_str+amp)
+        #if i != 0:
+        #hosts[i].monitor()
 
-
-# TODO remove when it becomes irrelevant
-#def ddos_flood_spoofed_ddos(host,victims_ip):
-#    for host in hosts:
-#        host.cmd('timeout '+str(flooding_time)+'s hping3 --flood -a '+host.ip+' '+victims_ip)
 
 # Start CLI 
 net.build()
@@ -82,14 +81,17 @@ print('Time to Start is ',t2-t1)
 # Emulate Traffic 
 hosts = [net.getNodeByName('h'+str(i)) for i in range(num_hosts)]
 switch = net.getNodeByName('s0')
+print(switch)
 collector = net.getNodeByName('hc')
 
-# Open Wireshark on first Host we can find
-switch.sendCmd('sudo ovs-ctl start')
-hosts[3].sendCmd('sudo wireshark -i h3-eth0 -k &')
-hosts[3].monitor()
-#collector.sendCmd('sudo wireshark -i hc-eth0 -k &')
-#collector.monitor()
+#hosts[0].cmd('sudo wireshark -i h0-eth0 -k &')
+
+print('First Host MAC: {}'.format(hosts[0].MAC()))
+print('Collector MAC: ',collector.MAC())
+print('Switch MAC: ',switch.MAC())
+
+#  switch.cmd("ovs-vsctl set bridge s0 protocols=OpenFlow13")
+#  hosts[3].cmd("wireshark -i h3-eth0 -k &")
 
 flood_thread = threading.Thread(target=traffic_simulation,args=(hosts))
 flood_thread.start()
