@@ -7,6 +7,9 @@ As the testbench I will use OpenFlow, Mininet.
 References to software, tutorials, guides and paper I used will (not exhaustively)
 be listed below.
 
+
+
+
 # Description
 
 Project is based in mininet + openVSwitch + Ryu Controller. 
@@ -32,6 +35,23 @@ collector at a specified rate.
 
 (Comment: I am not sure yet whether to make the collector be the same as the controller)
 
+# 🏃How to Run
+
+1. Export path to your OpenVSwitch executables:
+   
+   ```
+   export PATH=$PATH:/path/to/your/openvswitch/executables
+   ```
+2. Run openVSwitch
+   
+   ```
+   sudo ovs-ctl start
+   ```
+3. Run our ryu application: `ryu-manager controller13.py`
+4. Make sure your config is correct. See `./controller_params.conf`
+5. Run the `main.py` python script to generate your traffic.
+6. 💫Retrieve your generated traffic.
+
 # TODOS
 
 - [x] Create Basic Topologies
@@ -42,12 +62,25 @@ collector at a specified rate.
 - [x] Setup Traffic
     - [ ] Setup simple Scapy Traffic (skip for now)
     - [x] Setup Self-Similar Traffic
+    - [ ] Confirm Self-Similar Statistics
 - [ ] Implement Time Sampling
 - [ ] Create a `dpctl.c` modification to allow for sampling in the time domain.
 
+# Dependencies
+
+1. [openVSwitch]
+1. [ryu]
+1. [mininet]
+1. [sourcesonoff]
+1. [wireshark]
+1. [pypcapkit](https://pypi.org/project/pypcapkit/)
+1. [scapy]
+
 # References:
 
-1. [OpenFlow Software Switch(BOFUSS)](https://github.com/CPqD/ofsoftswitch13/tree/master)
-    1. [Netbee](https://github.com/netgroup-polito/netbee.git)
-2. [Mininet Simulator](http://mininet.org/)
-3. [Self-Similar Traffic]()
+- [OpenFlow Software Switch(BOFUSS)](https://github.com/CPqD/ofsoftswitch13/tree/master)
+  1. [Netbee](https://github.com/netgroup-polito/netbee.git)
+- [Mininet Simulator](http://mininet.org/)
+- [Self-Similar Traffic]()
+- [Nixira Extension Netflow Sample in Ryu](https://ryu.readthedocs.io/en/latest/nicira_ext_ref.html#ryu.ofproto.ofproto_v1_3_parser.NXActionSample)
+

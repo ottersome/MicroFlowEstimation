@@ -34,7 +34,8 @@ class Controller(RyuApp):
         self.config.register_opts([
             cfg.StrOpt('collector_ip',default="10.0.0.200",help='IP for collector'),
             cfg.StrOpt('collector_mac',default="00:00:00:00:01:A4",help='MAC for collector'),
-            cfg.StrOpt('collector_port',default=6600,help='Port for collector'),
+            cfg.IntOpt('collector_port',default=6600,help='Port for collector'),
+            cfg.FloatOpt('sample_probability',default=1,help='NetFlow-like probability of sampling'),
             ])
         # TODO: hard code the mac address of collector
 
@@ -101,17 +102,19 @@ class Controller(RyuApp):
 
         actions = [datapath.ofproto_parser.OFPActionOutput(out_port)]
         # Add Flow To Collector
-        self.logger.info('Sampling packets to : '+self.config['collector_port'])
-        actions.append(datapath.ofproto_parser.OFPActionOutput(
-          int(self.config['collector_port'])))
-        # Add Flow for Precise Match
+        self.logger.info('Sampling packets to : '+str(self.config['collector_port']))
+        ## SAMPLING (🚧 Under Construction)
+        actions.append(datapath.ofproto_parser.OFPActionOutput(self.config['collector_port']))
+        #  actions += datapath.ofproto_parser.NXActionSample(
+        #          probability=self.config['sample_probability'],
+        #          )
+        ## Add Flow for Precise Match
         if out_port != ofproto.OFPP_FLOOD:
             match = parser.OFPMatch(
                     in_port=in_port, eth_dst=dst, eth_src=src
                     )
             self.__add_flow(datapath, match, actions, ofproto.OFP_DEFAULT_PRIORITY+1)
-
-        # Broadcast it since we don't know where to send it for now
+        ## Broadcast it since we don't know where to send it for now
         out = parser.OFPPacketOut(datapath=datapath,
                                   buffer_id=msg.buffer_id,
                                   in_port=in_port,
