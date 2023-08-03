@@ -88,4 +88,5 @@ collector at a specified rate.
 - [Mininet Simulator](http://mininet.org/)
 - [Self-Similar Traffic]()
 - [Nixira Extension Netflow Sample in Ryu](https://ryu.readthedocs.io/en/latest/nicira_ext_ref.html#ryu.ofproto.ofproto_v1_3_parser.NXActionSample)
+- [HyperLogLog Algorithm](https://en.wikipedia.org/wiki/HyperLogLog)
 

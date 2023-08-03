@@ -30,11 +30,11 @@ def get_length_statistics(sesh:sessions)-> dict[str,int]:
     session_lengths = {}
     # Initialize
     file_logger.debug('Below are all the keys we have')
-    file_logger.debug(str(sessions.keys()))
-    for k in sessions.keys(): session_lengths[k] = 0
+    #file_logger.debug(str(sessions.keys()))
     for k,packetlist in sessions.items():
-        if 'UDP' not in k: continue
-        session_lengths[k] += get_tot_len_flow(packetlist)
+        if 'UDP 10.0.0' in k and 'Raw' not in k:
+            prev_val = session_lengths.get(k,0)
+            session_lengths[k] = prev_val + get_tot_len_flow(packetlist)
     return session_lengths
 
 
@@ -42,11 +42,13 @@ def get_length_statistics(sesh:sessions)-> dict[str,int]:
 ########## Configuration ##########
 logger=logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 args = get_args()
 
 # Load To Memory
 t0 = time()
-logger.info(f'Loading the file {args.pcap_file}')
+logger.info(f'📂 Loading the file {args.pcap_file}')
 pcap_flow =rdpcap(args.pcap_file)
 t1 = time()
 logger.debug('It took {} seconds to load the pcap file'.format(t1-t0))
@@ -59,10 +61,10 @@ lengths = dict(sorted(lengths.items(), key= lambda item: item[1],reverse=True))
 logger.info(f'We have a final amount of {len(lengths.keys())} flows')
 ## Plot The Info
 
-
+logger.info('📊 Plotting')
 fig, axs = plt.subplots(1,2)
 #axs[0].bar(range(num_sessions),lengths.values(),tick_label=lengths.keys)
-axs[0].bar(range(num_sessions),lengths.values())
+axs[0].bar(range(len(lengths)),lengths.values())
 axs[0].set_title('Size of Flows')
 
 axs[1].hist(lengths.values(),bins=15)

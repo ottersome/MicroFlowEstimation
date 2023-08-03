@@ -14,7 +14,7 @@ def sample_packets(packets:PacketList, offtime:float,ontime:float)-> PacketList:
     currPacketList = PacketList([])
     on_p_off_time = ontime+ offtime
     for packet in packets:
-        _logger.debug('Packet time {}, remainder {}.'.format(packet.time, packet.time % on_p_off_time))
+        #  _logger.debug('Packet time {}, remainder {}.'.format(packet.time, packet.time % on_p_off_time))
         if packet.time % on_p_off_time <= ontime:
             currPacketList.append(packet)
     return currPacketList
