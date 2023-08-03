@@ -37,6 +37,8 @@ collector at a specified rate.
 
 # 🏃How to Run
 
+## Traffic Generation
+
 1. Export path to your OpenVSwitch executables:
    
    ```
@@ -51,6 +53,10 @@ collector at a specified rate.
 4. Make sure your config is correct. See `./controller_params.conf`
 5. Run the `main.py` python script to generate your traffic.
 6. 💫Retrieve your generated traffic.
+
+## For Sampling:
+
+1. Run `./pcap_sampler.py` with arguments denoting where the traffic capture file is
 
 # TODOS
 
@@ -73,7 +79,6 @@ collector at a specified rate.
 1. [mininet]
 1. [sourcesonoff]
 1. [wireshark]
-1. [pypcapkit](https://pypi.org/project/pypcapkit/)
 1. [scapy]
 
 # References:
