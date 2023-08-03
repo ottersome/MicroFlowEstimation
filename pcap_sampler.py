@@ -44,11 +44,16 @@ if __name__ == '__main__':
             udp_packets.append(packet)
             if str(packet) not in list_keys:
                 list_keys.append(str(packet))
-    logger.info('Final keys with length {}:\n{}'.format(len(list_keys),list_keys))
+    logger.info('☑️ Baseline amount of flows: {}'.format(len(list_keys)))
 
     ## Sample Packets
     sampled_packets = sample_packets(udp_packets, 2,1)
-    logging.info(f'🗃️ Saving sampled packets to {args.sampled_packets}')
+    logger.info(f'🗃️ Saving sampled packets to {args.sampled_packets}')
     wrpcap(args.sampled_packets,sampled_packets)
 
     ## Do Inference on the Samplers
+    est = 0
+    logger.info('Performing Estimation...')
+    for packet in sampled_packets:
+        est = hll_impl(str(packet))
+    logger.info('✅ HyperLogLog Estimation of flows: {}'.format(est))
