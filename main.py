@@ -86,15 +86,15 @@ logger.info('Switch MAC: {}'.format(switch.MAC()))
 #  hosts[3].cmd("wireshark -i h3-eth0 -k &")
 
 
-flood_thread = threading.Thread(
+traffic_sim_threads = threading.Thread(
         target=traffic_simulation,
         args=(config.getint('traffic_sim_time'),hosts)
         )
-flood_thread.start()
+traffic_sim_threads.start()
 
 # Estimate Utility Function.
 CLI( net )
-flood_thread.join()
+traffic_sim_threads.join()
 t3 = time()
 net.stop()
 t4 = time()
