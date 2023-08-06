@@ -31,12 +31,14 @@ with open('./controller_params.conf') as f:
     global_config.read_file(f)
 config = global_config['DEFAULT']
 log_file = None if config['log_file'] == "" else config['log_file']
-logging.basicConfig(level=logging_level)
-logger = logging.getLogger(__name__)
+gen_logger = logging.getLogger(__name__)
+#  fh = logging.StreamHandler()
+#  gen_logger.addHandler(fh)
+gen_logger.setLevel(logging_level)
 
 logging.info('**⚙️ Your Configs **')
 for k,v in dict(config).items():
-    logger.info('{}:{}'.format(k,v))
+    gen_logger.info('{}:{}'.format(k,v))
 logging.info('*******************\n')
 dir_owner = pwd.getpwuid(os.stat('./').st_uid)[0]
 cur_dir = os.getcwd()
@@ -63,7 +65,7 @@ net = Mininet(topo=topo,
 net.build()
 net.start()
 t2 = time()
-logger.info('⏲️ Time to Start is {}'.format(t2-t1))
+gen_logger.info('⏲️ Time to Start is {}'.format(t2-t1))
 
 ## Obtain references to hosts inside the entwork
 hosts = [net.getNodeByName('h'+str(i)) for i in range(num_hosts)]
@@ -74,17 +76,16 @@ collector.setIP(config['collector_ip'])
 collector.setMAC(config['collector_mac'])
 
 dump_file_name = config['dumppcap_file'].format(date.today())
-logger.info(f'📝 Writing log file to: {dump_file_name}')
-collector.cmd(f"runuser -l {dir_owner} -c "\
+gen_logger.info(f'📝 Writing log file to: {dump_file_name}')
+collector.sendCmd(f"runuser -l {dir_owner} -c "\
         f"'dumpcap -a duration:{config.getint('traffic_sim_time') +3}"\
-        f" -i hc-eth0 -w {cur_dir}/{dump_file_name} &'")
+        f" -i hc-eth0 -w {cur_dir}/{dump_file_name}'")
 
-logger.info('First Host MAC: {}'.format(hosts[0].MAC()))
-logger.info('Collector MAC: {}'.format(collector.MAC()))
-logger.info('Switch MAC: {}'.format(switch.MAC()))
+gen_logger.info('First Host MAC: {}'.format(hosts[0].MAC()))
+gen_logger.info('Collector MAC: {}'.format(collector.MAC()))
+gen_logger.info('Switch MAC: {}'.format(switch.MAC()))
 
 ## Emulate Traffic in Threads
-
 traffic_sim_threads = threading.Thread(
         target=traffic_simulation_w_rates,
         args=(config.getint('traffic_sim_time'),hosts,12,4)
@@ -92,12 +93,13 @@ traffic_sim_threads = threading.Thread(
 traffic_sim_threads.start()
 
 # Estimate Utility Function.
-CLI( net ) # Useful foenor debugging
+#  CLI( net ) # Useful foenor debugging
 traffic_sim_threads.join()
-logger.info(f'🛑 Waiting for {config.getint("traffic_sim_time")}'\
-        f' seconds while data is being collected in {cur_dir}/{dump_file_name}')
-#  collector.monitor()
+gen_logger.info(f'🛑 Waiting for {config.getint("traffic_sim_time")}'\
+        f' seconds while data is being collected in {cur_dir}/{dump_file_name}. Output of `dumpcap`:')
+while collector.waiting:
+    gen_logger.info(collector.monitor())
 t3 = time()
 net.stop()
 t4 = time()
-logger.info('⏲️a Time to tear down is {}'.format(t4-t3))
+gen_logger.info('⏲️a Time to tear down is {}'.format(t4-t3))

@@ -23,7 +23,7 @@ def get_args():
     #parser.add_argument('--sampled_packets',type=str,required=True)
     parser.add_argument('--low_samp_bound_exp',type=float,default=-24,required=False)
     parser.add_argument('--up_samp_bound_exp',type=float,default=48,required=False)
-    parser.add_argument('--on_time',type=float,default=0.0000001,required=False)
+    parser.add_argument('--on_time',type=float,default=0.000000000001,required=False)
     #parser.add_argument('--storage_units',type=str,required=True)
 
     return parser.parse_args()

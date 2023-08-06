@@ -5,9 +5,10 @@ import numpy as np
 
 traffic_logger = logging.getLogger(__name__)
 traffic_logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler('traffic.log')
+fh = logging.FileHandler('./logs/traffic.log')
 fh.setLevel(logging.DEBUG)
 traffic_logger.addHandler(fh)
+traffic_logger.propagate = False
 
 def traffic_simulation(simulation_time: int,hosts: List[Host]):
     num_hosts = len(hosts)
