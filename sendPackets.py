@@ -16,14 +16,14 @@ def parse_args():
     args = argparse.ArgumentParser()
     args.add_argument('--dest_MAC',type=str,required=True)
     args.add_argument('--dest_IP',type=str,required=True)
-    args.add_argument('--pps',type=str,required=True)
+    args.add_argument('--pps',type=float,required=True)
     args.add_argument('--run_time',type=float,required=True)
     return args.parse_args()
 
 
-srcMAC = os.popen('ifconfig | grep HWaddr | cut -dH -f2 | cut -d\  -f2').read().strip()
-srcIP = os.popen('ifconfig | grep "inet addr" | cut -d: -f2 | cut -d\  -f1 | head -n1').read().strip()
-thisHost = os.popen('ifconfig | sed -n \'s/.*\\(h[0-9]*\\)-eth.*/\\1/p\'').read().strip()
+srcMAC   = os.popen("ip a | sed -n -E '/eno/,$p' | grep -oE '([0-F]{2}:){5}[0-F]{2}' | awk 'NR==1'").read().strip()
+srcIP    = os.popen("ip a | sed -n -E '/eno/,$p' | grep -oE '(192|10)\.([0-9]{1,3}\.){2}[0-9]{1,3}' | awk 'NR==1'").read().strip()
+thisHost = os.popen('hostname').read().strip()
 
 logger.info('Using your srcMac {} srcIP {} and host {}'.format(
     srcMAC,srcIP,thisHost))
@@ -34,10 +34,12 @@ args = parse_args()
 ##### Main #####
 # TODO maybe used this as arguments and ask parent to  be responsible 
 # of avoiding clashes
-src_port = np.random.randint(1000,60000,size=1)
-dest_port = np.random.randint(1000,60000,size=1)
+src_port = np.random.randint(1000,60000,size=1).item()
+dest_port = np.random.randint(1000,60000,size=1).item()
 
-headers = scapy.Ether(src=srcMAC, dst=args.dest_MAC) / scapy.IP(src=srcIP, dst=args.dest_IP)/scapy.UDP(flags="A", sport=src_port, dport=dest_port)
+headers = scapy.Ether(src=srcMAC, dst=args.dest_MAC) /\
+           scapy.IP(src=srcIP, dst=args.dest_IP)/\
+           scapy.UDP(sport=src_port, dport=dest_port)
 
 s = scapy.conf.L2socket()
 i = 1
