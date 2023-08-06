@@ -1,3 +1,4 @@
+from math import comb
 from scapy import sessions
 from scapy.all import  PacketList, rdpcap,wrpcap
 from time import time
@@ -28,31 +29,50 @@ def get_args():
 
     return parser.parse_args()
 
+#TODO: Imporve with quicksort algoritm
+def stateful_sample_estimate(packets: PacketList,
+                    offtime:float,
+                    mem_units:int=40,
+                    offset:float = 1.0#Time offset from which to peek
+                    ) -> int:
+    """Will only sample within a window of time
+    Will make last seen packet as its *state*
+    """
+    hll = hyperloglog.HyperLogLog(0.01)
+    init_time = packets[0].time + offset
+    next_sample_time = init_time+offtime
+    cnt = 0
+    for i in range(len(packets)):
+        if packet.time < init_time: continue
+        if packet[i].time < next_sample_time and packet[i+1].time > next_sample_time:
+            hll.add(str(packet))
+            next_sample_time += offtime
+            cnt += 1
+
+        if cnt >= mem_units: 
+            break
+
+    return len(hll)
+
 def sample_estimate(packets:PacketList,
                     offtime:float,
                     ontime:float,
                     mem_units=40,
                     time_budget=3) -> int: 
+    """Will iterate over packages until it finds mem_units that fit withing the sampling time
+
+    """
     # Assume they are already ordered
-    init_packet_time = packets[0].time
     hll= hyperloglog.HyperLogLog(0.01)
     on_p_off_time = ontime + offtime
-    estimate = -1
     keys = []
     avg_gap_size = 0.0
-    last_time = init_packet_time
-    for i,packet in enumerate(packets):
+    cnt = 0
+    for packet in packets:
         if packet.time % on_p_off_time <= ontime :
-            avg_gap_size = ((i)/(i+1))*avg_gap_size + (1/(i+1))*(packet.time - last_time)
-            last_time = packet.time
-            key = str(packet)
-            if key not in keys: keys.append(key)
             hll.add(str(packet))
-            if i >= mem_units: 
-                val = len(hll)
-                break
-                #estimates += len(hll)
-                #  hll=hyperloglog.HyperLogLog(0.02)
+            cnt +=1
+            if cnt >= mem_units: break
 
     logger.debug(f'Average Gap : {avg_gap_size}')
     logger.debug(f'For offtime {offtime} we get {len(keys)} different flows')

@@ -62,6 +62,9 @@ collector at a specified rate.
 
 ## For Sampling:
 
+Make sure you have installed:
+
+1. `pip install hyperloglog`
 1. Run `./pcap_sampler.py` with arguments denoting where the traffic capture file is
 
 # TODOS
