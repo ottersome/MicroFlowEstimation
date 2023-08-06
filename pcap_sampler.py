@@ -30,6 +30,7 @@ def get_args():
     return parser.parse_args()
 
 #TODO: Imporve with quicksort algoritm
+# NOT FINISHED
 def stateful_sample_estimate(packets: PacketList,
                     offtime:float,
                     mem_units:int=40,
@@ -59,8 +60,11 @@ def sample_estimate(packets:PacketList,
                     ontime:float,
                     mem_units=40,
                     time_budget=3) -> int: 
-    """Will iterate over packages until it finds mem_units that fit withing the sampling time
-
+    """ Will iterate over packages until it finds mem_units that fit withing the sampling time
+    packets: filtered packet list
+    offtime: "frequency". Time between on states
+    ontime: Duration of on state
+    mem_units: Limit on samples collected
     """
     # Assume they are already ordered
     hll= hyperloglog.HyperLogLog(0.01)
