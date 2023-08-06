@@ -70,7 +70,7 @@ if __name__ == '__main__':
     udp_packets = PacketList([])
     list_keys = []
     for packet in scapy_cap:
-        if "UDP 10.0.0" in str(packet) and "Raw" not in str(packet):
+        if "UDP 10.0.0" in str(packet):# and "Raw" not in str(packet):
             udp_packets.append(packet)
             if str(packet) not in list_keys:
                 list_keys.append(str(packet))
