@@ -27,6 +27,7 @@ frequently)
 
 Topology is circular see (./py\_utils/topologies/thick.py).
 When a hosts sends a packet to controller it will immediately bind its mac address to its
+r
 ingress port. That way we can form a static map of where the mac addresses come from. 
 With a map in place the controller can communicate with the switches the rules to set in
 terms of ethernet/mac addresses. 
@@ -49,9 +50,14 @@ collector at a specified rate.
    ```
    sudo ovs-ctl start
    ```
+   You can see [this](https://docs.openvswitch.org/en/stable/intro/install/general/)
+   page to understand how to run it. 
+
 3. Run our ryu application: `ryu-manager controller13.py`
+
+   You can install ryu via `pip install ryu`
 4. Make sure your config is correct. See `./controller_params.conf`
-5. Run the `main.py` python script to generate your traffic.
+5. Run the `traffic_generation.py` python script to generate your traffic.
 6. 💫Retrieve your generated traffic.
 
 ## For Sampling:
